@@ -1,51 +1,51 @@
-import React ,{ useEffect} from 'react';
+import React, { useEffect } from 'react';
+import { connect } from 'react-redux'
 
-const List = () => {
+import { useHistory } from 'react-router-dom';
 
-    const [userList, setuserList] = React.useState();
-    const [totalPages, setTotalPages] = React.useState();
+const List = ({ fetchList, users }) => {
+
+    const history = useHistory()
+
+    const [userList, setuserList] = React.useState(users.data);
+    const [totalPages, setTotalPages] = React.useState(users.total_pages);
     const [activePage, setActivePage] = React.useState(1);
 
-    const fetchList = () => {
-        fetch(`https://reqres.in/api/users?page=${activePage}&per_page=5`, { method: 'GET' })
-            .then(res => res.json())
-            .then(data => {
-                setuserList(data?.data)
-                setTotalPages(data?.total_pages)
-                
-            })
-    }
-
     useEffect(() => {
-        fetchList();
-    }, [activePage])
+        setuserList(users.data)
+        setTotalPages(users.total_pages)
+
+    }, [users])
 
     return (
         <>
             <div className='p-5 text-center'>
 
                 <h1>List of users</h1>
-                <ul className="list-group">
-                    {userList?.length && userList.map(user => <li className="list-group-item list-group-item-action pointer">{user?.first_name +" "+ user?.last_name}</li>)
+                <ul className="list-group" style={{ minHeight: 240 }}>
+                    {userList?.length && userList.map(user => <li onClick={() => { history.push(`/details/${user?.id}`) }} className="list-group-item list-group-item-action pointer">{user?.first_name + " " + user?.last_name}</li>)
                     }
 
                 </ul>
-                <nav aria-label="...">
-                    <ul className="pagination">
-                      
-                        <li className="page-item disabled">
-                            <span className="page-link"  tabindex="-1">Previous</span>
-                        </li>
-                        {
-                    [...Array(totalPages)].map((e, i) =>   <li key={i} className="page-item" onClick={()=>{setActivePage(i+1)}}><span className={ i+1 == activePage ?'page-link active':'page-link'} > {i+1}</span></li>)
+                <div className='pag-block mt-4'>
+                    <nav aria-label="...">
+                        <ul className="pagination pointer">
 
-                        }
-                    
-                        <li className="page-item">
-                            <span className="page-link" >Next</span>
-                        </li>
-                    </ul>
-                </nav>
+                            <li className={activePage == 1 ? "page-item disabled" : 'page-item'}>
+                                <span className="page-link" onClick={() => { setActivePage(activePage - 1); fetchList(activePage - 1) }} tabindex="-1">Previous</span >
+                            </li>
+                            {
+                                [...Array(totalPages)].map((e, i) => <li key={i} className="page-item" onClick={() => { setActivePage(i + 1); fetchList(i + 1) }}><span className={i + 1 == activePage ? 'page-link active' : 'page-link'} > {i + 1}</span></li>)
+
+                            }
+
+                            <li className={activePage == totalPages ? "page-item disabled" : "page-item"}>
+                                <span className="page-link" onClick={() => { setActivePage(activePage + 1); fetchList(activePage + 1) }} >Next</span>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+
 
             </div>
 
@@ -54,4 +54,12 @@ const List = () => {
     );
 }
 
-export default List;
+const mapStateToProps = (state) => {
+    return {
+        users: state.users,
+        ...state
+    }
+}
+
+
+export default connect(mapStateToProps)(List);
